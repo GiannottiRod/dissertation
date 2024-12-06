@@ -187,3 +187,15 @@ if __name__ == '__main__':
     with open(target_json_file_path) as f:
         data = json.load(f)
     test_snp500_constituents_json_integrity(data)
+
+    # Historical year over year change log
+    for y in range(1996, today.year + 1): # 1996 is the first year in the data
+        added, removed = get_snp500_constituents_changes(f'{y}-01-01', f'{y}-12-31')
+        print(f'{y} - added: {len(added)}, removed: {len(removed)}')
+
+
+    import pandas as pd
+    # Current year week over week change log
+    for week_start in pd.date_range(start=f'{today.year}-01-01', end=today, freq='W-MON'):
+        added, removed = get_snp500_constituents_changes(week_start, week_start + pd.Timedelta(days=6))
+        print(f'{week_start.date()} - added: {len(added)}, removed: {len(removed)}')
