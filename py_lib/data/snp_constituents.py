@@ -1,35 +1,19 @@
 from datetime import datetime as dt
+from py_lib import settings
+from py_lib import util as pu
 import json
 import re
 
-today = dt.today().replace(hour=0, minute=0, second=0, microsecond=0)
-#raw_data_path = './python_code/data/snp_historical_dumb.csv'
+#raw_data_path = './py_lib/data/snp_historical_dumb.csv'
 raw_data_path = './snp_historical_dumb.csv'
-#target_json_file_path = './python_code/data/snp_add_remove.json'
+#target_json_file_path = './py_lib/data/snp_add_remove.json'
 target_json_file_path = './snp_add_remove.json'
-  #TODO refactor this to a settings file, do this when creating the user lib
-default_date_format = '%Y-%m-%d'
-default_datetime_format = '%Y-%m-%d %H:%M:%S'
-
-
-def treat_date_input(date_input):
-    if isinstance(date_input, str):
-        try:
-            date_input = dt.strptime(date_input, default_date_format)
-        except ValueError:
-            try:
-                date_input = dt.strptime(date_input, default_datetime_format)
-            except ValueError:
-                raise ValueError(f'date must be a string in the format {default_date_format} '
-                                 f'or {default_datetime_format}')
-
-    return date_input
 
 
 def treat_snp500_constituents_raw_data(raw_data_file_path):
     with open(raw_data_file_path) as f:
         lines = f.readlines()
-    raw_data = [{'date': dt.strptime(line.split(',')[0], default_date_format),
+    raw_data = [{'date': dt.strptime(line.split(',')[0], settings.default_date_format),
                  'tickers': [re.sub(r'\s+', '', x.replace('"', ''))
                              for x in line.split(',')[1:]]}
                 for line in lines[1:]]
@@ -75,7 +59,7 @@ def upsert_snp500_constituents_json(json_file_path, upsert_data):
     assert 'date' in upsert_data, 'update must have a "date" or "_id" key'
 
     if isinstance(upsert_data['date'], dt):
-        upsert_data['date'] = treat_date_input(upsert_data['date']).strftime(default_datetime_format)
+        upsert_data['date'] = pu.treat_date_input(upsert_data['date']).strftime(settings.default_datetime_format)
 
     # Check if the update date is already in the data
     dates = [x['date'] for x in data]
@@ -105,9 +89,9 @@ def test_snp500_constituents_json_integrity(candidate_data):
         assert re.match(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', d['date']), \
             'date must be in the format YYYY-MM-DD HH:MM:SS'
         try:
-            dt.strptime(d['date'], default_datetime_format)
+            dt.strptime(d['date'], settings.default_datetime_format)
         except ValueError:
-            raise AssertionError(f'date must be in the format {default_datetime_format}')
+            raise AssertionError(f'date must be in the format {settings.default_datetime_format}')
         if 'add' in d:
             assert isinstance(d['add'], list), 'add must be a list'
         if 'remove' in d:
@@ -127,23 +111,23 @@ def get_snp500_constituents(ref_date=None, json_file_path=None):
         json_file_path = target_json_file_path
 
     if ref_date is None:
-        ref_date = today
+        ref_date = pu.today
 
-    ref_date = treat_date_input(ref_date)
+    ref_date = pu.treat_date_input(ref_date)
 
     with open(json_file_path) as f_handle:
         data = json.load(f_handle)
 
     assert test_snp500_constituents_json_integrity(data), 'data integrity test failed'
     assert ref_date >= dt.strptime(data[0]['date'],
-                                   default_datetime_format), (f'reference date is too early, '
+                                   settings.default_datetime_format), (f'reference date is too early, '
                                                               f'current data starts at {data[0]["date"]}')
 
     # Cumulative add the "add" field and subtract the "remove" field from the documents
     # that have a date less than or equal to the reference date
     snp_constituents = data[0]['add']
     for d in data[1:]:
-        if dt.strptime(d['date'], default_datetime_format) > ref_date:
+        if dt.strptime(d['date'], settings.default_datetime_format) > ref_date:
             break
         snp_constituents = list(set(snp_constituents + d.get('add', [])) - set(d.get('remove', [])))
 
@@ -161,8 +145,8 @@ def get_snp500_constituents_changes(start_date, end_date, json_file_path=None):
     :return: tuple of two lists, the first list contains the tickers added to the S&P 500 between the two dates
                 and the second list contains the tickers removed from the S&P 500 between the two dates
     """
-    start_date = treat_date_input(start_date)
-    end_date = treat_date_input(end_date)
+    start_date = pu.treat_date_input(start_date)
+    end_date = pu.treat_date_input(end_date)
 
     start_constituents = get_snp500_constituents(start_date, json_file_path)
     end_constituents = get_snp500_constituents(end_date, json_file_path)
@@ -189,13 +173,13 @@ if __name__ == '__main__':
     test_snp500_constituents_json_integrity(data)
 
     # Historical year over year change log
-    for y in range(1996, today.year + 1): # 1996 is the first year in the data
+    for y in range(1996, pu.today.year + 1): # 1996 is the first year in the data
         added, removed = get_snp500_constituents_changes(f'{y}-01-01', f'{y}-12-31')
         print(f'{y} - added: {len(added)}, removed: {len(removed)}')
 
 
     import pandas as pd
     # Current year week over week change log
-    for week_start in pd.date_range(start=f'{today.year}-01-01', end=today, freq='W-MON'):
+    for week_start in pd.date_range(start=f'{pu.today.year}-01-01', end=pu.today, freq='W-MON'):
         added, removed = get_snp500_constituents_changes(week_start, week_start + pd.Timedelta(days=6))
         print(f'{week_start.date()} - added: {len(added)}, removed: {len(removed)}')
