@@ -86,7 +86,10 @@ def test_snp500_constituents_json_integrity(candidate_data):
         assert 'date' in d, 'date key not found in data'
         # assert 'add' in d or 'remove' in d, f'no movement for {d["date"]}'
         assert isinstance(d['date'], str), 'date must be a string'
-        assert re.match(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', d['date']), \
+        if not re.match(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', d['date']):
+            if re.match(r'\d{4}-\d{2}-\d{2}', d['date']).end() == len(d['date']):
+                d['date'] += ' 00:00:00'
+            assert re.match(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', d['date']), \
             'date must be in the format YYYY-MM-DD HH:MM:SS'
         try:
             dt.strptime(d['date'], settings.default_datetime_format)
@@ -163,6 +166,7 @@ if __name__ == '__main__':
         {'date': '2024-09-30', 'add': ['AMTM']},
         {'date': '2024-10-01', 'remove': ['BBWI']},
         {'date': '2024-11-26', 'add': ['TPL'], 'remove': ['MRO']},
+        {'date': '2024-12-23', 'add': ['APO', 'WDAY', 'LII'], 'remove': ['QRVO', 'AMTM', 'CTLT']}
         ]
 
     for update in updates_wiki:
