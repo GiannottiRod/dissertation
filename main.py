@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import QuantLib
 import json
+import os
 from tqdm import tqdm
 from datetime import datetime as dt
 from datetime import time
@@ -55,24 +56,43 @@ def pre_gen_data(data_start_date, data_end_date, analysis_start_date):
         ref_date_tickers = universe_by_date.columns[universe_by_date.loc[ref_date]]
         ref_date_tickers = [x for x in ref_date_tickers if x in df_log_returns.columns]
 
-        hist_log_returns = df_log_returns.loc[
-                           ref_date - relativedelta(years=1):ref_date,
-                           ref_date_tickers
-                           ].dropna(how='all', axis=1).fillna(0)
-
         forward_log_returns = df_log_returns.loc[
                               ref_date + nyse_cal:rebal_dates[i + 1],
                               ref_date_tickers
                               ].dropna(how='all', axis=1).fillna(0)
 
+        forward_effective_ref_date_tickers = list(forward_log_returns.columns)
+
+        hist_log_returns = df_log_returns.loc[
+                           ref_date - relativedelta(years=1):ref_date,
+                           forward_effective_ref_date_tickers
+                           ].dropna(how='all', axis=1).fillna(0)
+
+        effective_ref_date_tickers = list(hist_log_returns.columns)
+
         pre_gen_log_returns_hist.append({
             '_id': ref_date,
-            'available_tickers': ref_date_tickers,
+            'available_tickers': effective_ref_date_tickers,
             'hist_log_returns': hist_log_returns.to_dict('records'),
-            'forward_log_returns': forward_log_returns.to_dict('records'),
+            'forward_log_returns': forward_log_returns.reindex(effective_ref_date_tickers, axis=1).to_dict('records'),
         })
 
     return pre_gen_log_returns_hist
+
+
+def load_price_data(data_start_date, data_end_date, analysis_start_date, force_update=False):
+    json_file_path = 'py_lib/data/PriceData.json'
+
+    if force_update or not os.path.exists(json_file_path):
+        data = pre_gen_data(data_start_date, data_end_date, analysis_start_date)
+        with open(json_file_path, 'w') as f_handle:
+            json.dump(data, f_handle, default=str)
+
+    else :
+        with open(json_file_path, 'r') as f_handle:
+            data = json.load(f_handle)
+
+    return data
 
 
 def get_max_likelihood_cov_matrix(log_returns):
@@ -215,11 +235,11 @@ if __name__ == '__main__':
 
     DATA_START = dt(2001, 12, 31)
     # DATA_END = dt(2024, 12, 31)
-    DATA_END = dt(2014, 12, 31)
+    DATA_END = dt(2008, 12, 31)
 
     ANALYSIS_START = dt(2004, 1, 1)
 
-    data_to_use = pre_gen_data(DATA_START, DATA_END, ANALYSIS_START)
+    data_to_use = load_price_data(DATA_START, DATA_END, ANALYSIS_START, force_update=True)
 
     results = []
     for data_point in tqdm(data_to_use):
@@ -265,6 +285,6 @@ if __name__ == '__main__':
             }
         )
 
-    json_file_path = 'py_lib/data/Results_V0.json'
+    json_file_path = 'py_lib/data/Results_2003_2008.json'
     with open(json_file_path, 'w') as f_handle:
         json.dump(results, f_handle, default=str)
