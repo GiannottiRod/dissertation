@@ -20,8 +20,8 @@ NYSE_cal = pd.offsets.CustomBusinessDay(holidays=NYSE_holidays, n=1, weekmask='M
 
 TIINGO_API_KEY_1 = '00ece7cc32b7ec36f4196d24e88745f8a03578e5'
 
-# json_file_path = 'py_lib/data/DailyPricesRaw.json'
-json_file_path = '.\\DailyPricesRaw.json'
+json_file_path = 'py_lib/data/DailyPricesRaw.json'
+#json_file_path = '.\\DailyPricesRaw.json'
 
 MAX_HOURLY_REQUESTS = 10000
 
@@ -51,6 +51,7 @@ try:
 except FileNotFoundError:
     available_data = []
 
+available_data = [x for x in available_data if x['data']]
 already_got_tickers = [x['ticker'] for x in available_data]
 
 api_keys = [TIINGO_API_KEY_1]
@@ -93,6 +94,11 @@ for ticker, (start_date, end_date) in ticker_date_range.items():
                     time.sleep(1)
 
         if response.status_code == 200:
+            if not response.json():
+                print(f"No data for: {ticker}")
+                print(f'{response.content}')
+                tickers_failed.append(ticker)
+
             data_compendium.append({
                 'ticker': ticker.replace('-', '.'),
                 'data': response.json()

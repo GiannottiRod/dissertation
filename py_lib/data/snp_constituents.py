@@ -6,8 +6,8 @@ import re
 
 #raw_data_path = './py_lib/data/snp_historical_dumb.csv'
 raw_data_path = './snp_historical_dumb.csv'
-#target_json_file_path = './py_lib/data/snp_add_remove.json'
-target_json_file_path = './snp_add_remove.json'
+target_json_file_path = './py_lib/data/snp_add_remove.json'
+#target_json_file_path = './snp_add_remove.json'
 
 
 def treat_snp500_constituents_raw_data(raw_data_file_path):
