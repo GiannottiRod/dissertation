@@ -33,6 +33,8 @@ def treat_raw_data(path):
 
 
 def pre_gen_data(data_start_date, data_end_date, analysis_start_date):
+    json_file_path = 'py_lib/data/DailyPricesRaw.json'
+
     nyse_cal = get_cal()
 
     df_all = treat_raw_data(json_file_path)
@@ -72,6 +74,7 @@ def pre_gen_data(data_start_date, data_end_date, analysis_start_date):
 
         pre_gen_log_returns_hist.append({
             '_id': ref_date,
+            'date_index': forward_log_returns.index.to_list(),
             'available_tickers': effective_ref_date_tickers,
             'hist_log_returns': hist_log_returns.to_dict('records'),
             'forward_log_returns': forward_log_returns.reindex(effective_ref_date_tickers, axis=1).to_dict('records'),
@@ -229,17 +232,24 @@ def get_results(weights, returns):
     return (weights * returns).to_dict('records')
 
 
-if __name__ == '__main__':
-    json_file_path = 'py_lib/data/DailyPricesRaw.json'
-    # json_file_path = '.\\DailyPricesRaw.json'
+def gen_portfolios_hist(start_year, end_year, force_recalc=False):
+    json_file_path = f'py_lib/data/Results_{start_year}_{end_year}.json'
 
-    DATA_START = dt(2001, 12, 31)
+    if not force_recalc and os.path.exists(json_file_path):
+        with open(json_file_path, 'r') as f_handle:
+            try:
+                return json.load(f_handle)
+            except:
+                print("File not readable, recalculating anyway")
+                pass
+
+    data_start = dt(start_year-2, 12, 31)
     # DATA_END = dt(2024, 12, 31)
-    DATA_END = dt(2008, 12, 31)
+    data_end = dt(end_year, 12, 31)
 
-    ANALYSIS_START = dt(2004, 1, 1)
+    analysis_start = dt(start_year, 1, 1)
 
-    data_to_use = load_price_data(DATA_START, DATA_END, ANALYSIS_START, force_update=True)
+    data_to_use = load_price_data(data_start, data_end, analysis_start, force_update=True)
 
     results = []
     for data_point in tqdm(data_to_use):
@@ -255,16 +265,24 @@ if __name__ == '__main__':
         ewma_cov_matrix_hierarchical_rp_portfolio = get_hierarchical_rp_portfolio(ewma_cov_matrix)
         ledoit_wolf_cov_matrix_hierarchical_rp_portfolio = get_hierarchical_rp_portfolio(ledoit_wolf_cov_matrix)
 
+        equal_weight_portfolio = {t: 1/len(data_point['available_tickers']) for t in data_point['available_tickers']}
+
         rp_ml_results = get_results(ml_cov_matrix_rp_portfolio, pd.DataFrame(data_point['forward_log_returns']))
         rp_ewma_results = get_results(ewma_cov_matrix_rp_portfolio, pd.DataFrame(data_point['forward_log_returns']))
         rp_ldw_results = get_results(ledoit_wolf_cov_matrix_rp_portfolio, pd.DataFrame(data_point['forward_log_returns']))
 
-        hrp_ml_results = get_results(ewma_cov_matrix_hierarchical_rp_portfolio, pd.DataFrame(data_point['forward_log_returns']))
+        hrp_ml_results = get_results(ml_cov_matrix_hierarchical_rp_portfolio, pd.DataFrame(data_point['forward_log_returns']))
         hrp_ewma_results = get_results(ewma_cov_matrix_hierarchical_rp_portfolio, pd.DataFrame(data_point['forward_log_returns']))
         hrp_ldw_results = get_results(ledoit_wolf_cov_matrix_hierarchical_rp_portfolio, pd.DataFrame(data_point['forward_log_returns']))
 
+        equal_weight_results = get_results(equal_weight_portfolio, pd.DataFrame(data_point['forward_log_returns']))
+
         results.append(
             data_point | {
+                'ml_cov_matrix': ml_cov_matrix.to_dict('records'),
+                'ewma_cov_matrix': ewma_cov_matrix.to_dict('records'),
+                'ledoit_wolf_cov_matrix': ledoit_wolf_cov_matrix.to_dict('records'),
+
                 'rp_ml_weights': ml_cov_matrix_rp_portfolio,
                 'rp_ml_results': rp_ml_results,
 
@@ -282,9 +300,73 @@ if __name__ == '__main__':
 
                 'hrp_ldw_weights': ledoit_wolf_cov_matrix_hierarchical_rp_portfolio,
                 'hrp_ldw_results': hrp_ldw_results,
+
+                'equal_weight_weights': equal_weight_portfolio,
+                'equal_weight_results': equal_weight_results,
             }
         )
 
-    json_file_path = 'py_lib/data/Results_2003_2008.json'
     with open(json_file_path, 'w') as f_handle:
         json.dump(results, f_handle, default=str)
+
+    return results
+
+
+def get_daily_matrix_from_hist(data_to_use):
+    daily_matrices = {}
+    for dt_t_u in tqdm(data_to_use):
+        for ref_date in dt_t_u['date_index']:
+            daily_matrices[ref_date] = dt_t_u['ewma_cov_matrix']
+    return daily_matrices
+
+
+def risk_contribution(weights, covar_matrix):
+    return {1: 1}
+
+def get_concentration_metrics(hist_covar_matrices, hist_allocations):
+    hcm_fix = {}
+    for d, hcm in hist_covar_matrices.items():
+        hcm_df = pd.DataFrame(hcm)
+        hcm_df.index = hcm_df.columns
+        hcm_fix[d] = hcm_df
+
+    return {
+        'risk_allocation': {d: risk_contribution(hist_allocations.loc[d].T.to_dict(), hcm) for d, hcm in hcm_fix.items()},
+        'sector_allocation': [],
+        'sector_risk_allocation': [],
+    }
+
+
+def get_risk_return_metrics(hist_covar_matrices, hist_returns, freq):
+    return {
+        'risk_allocation': [],
+        'sector_allocation': [],
+        'sector_risk_allocation': [],
+    }
+
+
+def evaluate_portfolios(start_year, end_year):
+    portfolios_hist = gen_portfolios_hist(start_year, end_year)
+
+    hist_covar_matrices = get_daily_matrix_from_hist(portfolios_hist)
+
+    evaluations = []
+    for portfolio_to_evaluate in ['rp_ml', 'rp_ewma', 'rp_ldw_', 'hrp_ml', 'hrp_ewma', 'hrp_ldw_', 'equal_weight',]:
+        df_hist_returns = pd.concat([pd.DataFrame(week[f'{portfolio_to_evaluate}_weights'], index=week['date_index'])
+                                     for week in portfolios_hist])
+        df_hist_allocations = pd.concat([pd.DataFrame(week[f'{portfolio_to_evaluate}_results'], index=week['date_index'])
+                                         for week in portfolios_hist])
+
+        concentration_metrics = get_concentration_metrics(hist_covar_matrices, df_hist_allocations)
+        weekly_risk_return_metrics = get_risk_return_metrics(hist_covar_matrices, df_hist_returns, 'W')
+        monthly_risk_return_metrics = get_risk_return_metrics(hist_covar_matrices, df_hist_returns, 'M')
+        year_risk_return_metrics = get_risk_return_metrics(hist_covar_matrices, df_hist_returns, 'Y')
+
+    json_file_path = f'py_lib/data/Evaluation_{start_year}_{end_year}.json'
+    with open(json_file_path, 'w') as f_handle:
+        json.dump(evaluations, f_handle, default=str)
+
+    return evaluations, portfolios_hist
+
+if __name__ == '__main__':
+    evaluation_metrics, hist_data = evaluate_portfolios(2003, 2005)
