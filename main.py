@@ -10,6 +10,7 @@ from dateutil.relativedelta import relativedelta
 from py_lib.data.snp_constituents import get_snp500_constituents
 from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.spatial.distance import squareform
+from fredapi import Fred
 
 
 def get_cal():
@@ -149,81 +150,87 @@ def get_rp_portfolio(cov_matrix, gross_exposure=1.0):
     return {tk: w for tk, w in zip(cov_matrix.columns, weights)}
 
 
-def correl_dist(corr):
-    """Convert correlation matrix to distance matrix."""
-    return np.sqrt(0.5 * (1 - corr))
+def getIVP(cov,**kargs):
+    # Compute the inverse-variance portfolio
+    ivp=1./np.diag(cov)
+    ivp/=ivp.sum()
+    return ivp
 
 
-def get_quasi_diag(link):
-    link = link.astype(int)
-    num_items = link.shape[0] + 1
-
-    def recursively_extract(idx):
-        if idx < num_items:
-            return [idx]
-        else:
-            left = link[idx - num_items, 0]
-            right = link[idx - num_items, 1]
-            return recursively_extract(left) + recursively_extract(right)
-
-    return recursively_extract(len(link) + num_items - 2)
+def getClusterVar(cov,cItems):
+    # Compute variance per cluster
+    cov_=cov.loc[cItems,cItems] # matrix slice
+    w_=getIVP(cov_).reshape(-1,1)
+    cVar=np.dot(np.dot(w_.T,cov_),w_)[0,0]
+    return cVar
 
 
-def get_cluster_var(cov, assets):
-    """Compute variance of a cluster."""
-    sub_cov = cov[np.ix_(assets, assets)]
-    w = np.ones(len(assets)) / len(assets)
-    return w.T @ sub_cov @ w
+def getQuasiDiag(link):
+    # Sort clustered items by distance
+    link=link.astype(int)
+    sortIx=pd.Series([link[-1,0],link[-1,1]])
+    numItems=link[-1,3] # number of original items
+    while sortIx.max()>=numItems:
+        sortIx.index=range(0,sortIx.shape[0]*2,2) # make space
+        df0=sortIx[sortIx>=numItems] # find clusters
+        i=df0.index;j=df0.values-numItems
+        sortIx[i]=link[j,0] # item 1
+        df0=pd.Series(link[j,1],index=i+1)
+        sortIx=sortIx._append(df0) # item 2
+        sortIx=sortIx.sort_index() # re-sort
+        sortIx.index=range(sortIx.shape[0]) # re-index
+    return sortIx.tolist()
 
 
-def recursive_bisect(cov, sort_ix):
-    """Assign weights recursively based on cluster variance."""
-    w = pd.Series(1.0, index=sort_ix)
-
-    def _bisect(cov, items):
-        if len(items) <= 1:
-            return
-        split = len(items) // 2
-        left = items[:split]
-        right = items[split:]
-
-        var_left = get_cluster_var(cov, left)
-        var_right = get_cluster_var(cov, right)
-        alpha = 1 - var_left / (var_left + var_right)
-
-        w[left] *= alpha
-        w[right] *= 1 - alpha
-
-        _bisect(cov, left)
-        _bisect(cov, right)
-
-    _bisect(cov, sort_ix)
+def getRecBipart(cov,sortIx):
+    # Compute HRP alloc
+    w=pd.Series(1,index=sortIx)
+    cItems=[sortIx] # initialize all items in one cluster
+    while len(cItems)>0:
+        cItems = [i[j:k] for i in cItems for j, k in ((0, int(round(len(i) / 2))),
+                                                      (int(round(len(i) / 2)), len(i)))
+                  if len(i) > 1]  # bi-section
+        for i in range(0,len(cItems),2): # parse in pairs
+            cItems0=cItems[i] # cluster 1
+            cItems1=cItems[i+1] # cluster 2
+            cVar0=getClusterVar(cov,cItems0)
+            cVar1=getClusterVar(cov,cItems1)
+            alpha=1-cVar0/(cVar0+cVar1)
+            w[cItems0]*=alpha # weight 1
+            w[cItems1]*=1-alpha # weight 2
     return w
 
 
-def cov2corr(cov):
-    std = np.sqrt(np.diag(cov))
-    corr = cov / np.outer(std, std)
-    corr[corr < -1] = -1
-    corr[corr > 1] = 1
-    return corr
+def correlDist(corr):
+    # A distance matrix based on correlation, where 0<=d[i,j]<=1
+    # This is a proper distance metric
+    dist=np.sqrt((1-corr)/2.)# distance matrix
+    return dist
+
+
+def cov2corr(cov_matrix):
+    v = np.sqrt(np.diag(cov_matrix))
+    outer_v = np.outer(v, v)
+    correl = cov_matrix / outer_v
+    correl[cov_matrix == 0] = 0
+    return correl
 
 
 def get_hierarchical_rp_portfolio(cov_matrix, gross_exposure=1.0):
-    corr = cov2corr(cov_matrix)
-    dist = correl_dist(corr)
-    dist_vec = squareform(dist, checks=False)
-    link = linkage(dist_vec, method='single')
-    sort_ix = get_quasi_diag(link)
-    weights = recursive_bisect(cov_matrix.to_numpy(), sort_ix)
+    corr = cov2corr(cov_matrix).round(6)
+    dist = correlDist(corr)
+    link = linkage(dist.to_numpy(), 'single')
+    sortIx = getQuasiDiag(link)
+    sortIx = corr.index[sortIx].tolist()  # recover labels
+    weights = getRecBipart(cov_matrix, sortIx)
 
     # Recenter to zero net exposure
     centered = weights - weights.mean()
 
     # Rescale to target gross exposure
     scaled = gross_exposure * centered / np.sum(np.abs(centered))
-    index_map = {idx: tk for idx, tk in enumerate(cov_matrix.columns)}
-    scaled.index = scaled.index.map(index_map)
+    # index_map = {idx: tk for idx, tk in enumerate(cov_matrix.columns)}
+    # scaled.index = scaled.index.map(index_map)
 
     return scaled.reindex(cov_matrix.index).to_dict()
 
@@ -320,29 +327,171 @@ def get_daily_matrix_from_hist(data_to_use):
     return daily_matrices
 
 
-def risk_contribution(weights, covar_matrix):
-    return {1: 1}
+def risk_contribution(weights_dict, covar_matrix):
+    # Ensure assets in the same order
+    assets = covar_matrix.columns
+    weights = np.array([weights_dict[asset] for asset in assets])
+    covar_matrix = covar_matrix.values
 
-def get_concentration_metrics(hist_covar_matrices, hist_allocations):
+    # Portfolio volatility
+    portfolio_var = weights.T @ covar_matrix @ weights
+    portfolio_volatility = np.sqrt(portfolio_var)
+
+    # Marginal contribution to risk
+    marginal_contrib = (covar_matrix @ weights) / portfolio_volatility
+
+    # Total risk contribution
+    risk_contribution_ = {k: v for k, v in zip(assets, weights * marginal_contrib)}
+
+    risk_contribution_df = pd.Series(risk_contribution_)
+    weights_dict_df = pd.Series(weights_dict)
+
+    contributions = {
+        'long_risk_contribution': risk_contribution_df[weights_dict_df > 0].sum(),
+        'long_money_contribution': weights_dict_df[weights_dict_df > 0].sum(),
+        'short_risk_contribution': risk_contribution_df[weights_dict_df < 0].sum(),
+        'short_money_contribution': weights_dict_df[weights_dict_df < 0].sum(),
+    }
+    for pct in [0.01, 0.05, 0.1, 0.25]:
+        n_relevant = round(pct * len(assets))
+        contributions[f'risk_conc_at_{int(pct*100)}pct'] = risk_contribution_df.abs().sort_values().iloc[
+                                                           -n_relevant:].sum() / risk_contribution_df.abs().sum()
+        contributions[f'money_conc_at_{int(pct * 100)}pct'] = weights_dict_df.abs().sort_values().iloc[
+                                                             -n_relevant:].sum() / weights_dict_df.abs().sum()
+    return contributions
+
+
+def get_risk_free_rate(start_date, end_date, ticker="BIL"):
+    import yfinance as yf
+
+    data = yf.download(ticker, start=start_date, end=end_date, progress=False)
+    prices = data['Adj Close']
+    returns = prices.pct_change().dropna()
+    return returns
+
+
+def riskmetrics_volatility(returns: pd.Series, lambda_: float = 0.94) -> pd.Series:
+    returns = returns.dropna()
+    ewma_var = [returns.var()]
+
+    for t in range(1, len(returns)):
+        var_t = lambda_ * ewma_var[-1] + (1 - lambda_) * returns.iloc[t - 1] ** 2
+        ewma_var.append(var_t)
+
+    volatility = np.sqrt(pd.Series(ewma_var, index=returns.index))
+    return volatility.iloc[-1]
+
+
+def riskmetrics_beta(asset_returns: pd.Series, benchmark_returns: pd.Series, lambda_: float = 0.94) -> pd.Series:
+    data = pd.concat([asset_returns, benchmark_returns], axis=1).dropna()
+    r_a = data.iloc[:, 0]
+    r_b = data.iloc[:, 1]
+
+    var_b = [r_b.var()]
+    cov_ab = [np.cov(r_a, r_b)[0, 1]]
+
+    for t in range(1, len(data)):
+        var_b_t = lambda_ * var_b[-1] + (1 - lambda_) * r_b.iloc[t - 1] ** 2
+        cov_ab_t = lambda_ * cov_ab[-1] + (1 - lambda_) * r_a.iloc[t - 1] * r_b.iloc[t - 1]
+        var_b.append(var_b_t)
+        cov_ab.append(cov_ab_t)
+
+    beta = pd.Series(cov_ab, index=data.index) / pd.Series(var_b, index=data.index)
+    return beta.iloc[-1]
+
+
+def get_market_beta(returns):
+    import yfinance as yf
+
+    nyse_cal = get_cal()
+    snp = yf.download('^GSPC', returns.index[0] - nyse_cal, returns.index[-1] + nyse_cal, auto_adjust=True)
+
+    market_returns = np.log(snp['Close']['^GSPC']).diff().reindex(returns.index)
+
+    return riskmetrics_beta(returns, market_returns)
+
+
+def adjusted_sharpe_ratio(returns: pd.Series, risk_free_rate: pd.Series, cash_espenditure: pd.Series) -> float:
+    from scipy.stats import skew, kurtosis
+
+    r = returns.dropna()
+
+    # Excess returns
+    excess = r - risk_free_rate.reindex(r.index) * cash_espenditure.abs()
+
+    # Mean and standard deviation
+    mean_excess = excess.mean()
+    std_dev = excess.std(ddof=0)
+    sr = mean_excess / std_dev
+
+    # Higher moments
+    s = skew(excess)
+    k = kurtosis(excess, fisher=False)  # Use non-excess kurtosis (normal dist = 3)
+
+    # Adjusted Sharpe formula
+    adj_sr = sr * (1 + (s / 6) * sr - ((k - 3) / 24) * sr**2)
+
+    adj_sr *= np.sqrt(len(r))
+
+    return adj_sr
+
+
+def daily_risk_free_return(start_date: str, end_date: str, api_key='e85ede41d17902f0ae84c45d054d6f6d') -> pd.Series:
+    """"Board of Governors of the Federal Reserve System (US), Bank Prime Loan Rate [DPRIME], retrieved from FRED, Federal Reserve Bank of St. Louis; https://fred.stlouisfed.org/series/DPRIME, June 23, 2025."""
+    fred = Fred(api_key=api_key)
+
+    # Step 1: Download DPRIME series
+    dprime = fred.get_series('DPRIME', observation_start=start_date, observation_end=end_date)
+
+    # Step 2: Interpolate to daily frequency
+    daily_index = pd.date_range(start=start_date, end=end_date, freq='D')
+    dprime_daily = dprime.reindex(daily_index).interpolate(method='linear')
+
+    # Step 3: Convert annualized % rate to daily decimal return (assuming 252 trading days)
+    daily_rf = (dprime_daily / 100) / 252
+
+    return daily_rf
+
+
+def get_metrics(hist_covar_matrices, hist_returns, df_hist_allocations, asset_returns):
     hcm_fix = {}
     for d, hcm in hist_covar_matrices.items():
         hcm_df = pd.DataFrame(hcm)
         hcm_df.index = hcm_df.columns
         hcm_fix[d] = hcm_df
 
+    risk_contributions = {d: risk_contribution(df_hist_allocations.loc[d].T.fillna(0).to_dict(), hcm) for d, hcm in hcm_fix.items()}
+
+    concentration_metrics = pd.DataFrame(risk_contributions).T.mean().add_suffix('_mean').to_dict() | pd.DataFrame(risk_contributions).T.std().add_suffix('_std').to_dict()
+
+    hist_returns.index = pd.to_datetime(hist_returns.index)
+    df_hist_allocations.index = pd.to_datetime(df_hist_allocations.index)
+
+    total_returns = hist_returns.sum(axis=1)
+    long_returns = hist_returns[df_hist_allocations > 0].sum(axis=1)
+    short_returns = hist_returns[df_hist_allocations < 0].sum(axis=1)
+
+    nyse_cal = get_cal()
+    vol = riskmetrics_volatility(total_returns) * np.sqrt(252)
+    daily_risk_free = daily_risk_free_return(total_returns.index[0] - nyse_cal, total_returns.index[-1] + nyse_cal)
+
+    rf = (1 + daily_risk_free.reindex(total_returns.index)).prod() - 1
+
+    sharpe = ((np.exp(total_returns - df_hist_allocations.sum(axis=1).abs() * daily_risk_free.reindex(total_returns.index))).prod() - 1) / vol
+    adj_sharpe = adjusted_sharpe_ratio(total_returns, daily_risk_free, df_hist_allocations.sum(axis=1))
+    total_long_return = np.exp(long_returns.sum()) - 1
+    total_short_return = np.exp(short_returns.sum()) - 1
+
+    beta = get_market_beta(total_returns)
+    sortino = ((np.exp(total_returns - df_hist_allocations.sum(axis=1).abs() * daily_risk_free.reindex(total_returns.index))).prod() - 1) / abs(beta)
+
     return {
-        'risk_allocation': {d: risk_contribution(hist_allocations.loc[d].T.to_dict(), hcm) for d, hcm in hcm_fix.items()},
-        'sector_allocation': [],
-        'sector_risk_allocation': [],
+        'concentration_metrics': concentration_metrics,
     }
 
 
-def get_risk_return_metrics(hist_covar_matrices, hist_returns, freq):
-    return {
-        'risk_allocation': [],
-        'sector_allocation': [],
-        'sector_risk_allocation': [],
-    }
+def adjust_weights(weights, returns):
+    return (weights * np.exp(returns.shift(1).fillna(0))).to_dict('records')
 
 
 def evaluate_portfolios(start_year, end_year):
@@ -350,17 +499,21 @@ def evaluate_portfolios(start_year, end_year):
 
     hist_covar_matrices = get_daily_matrix_from_hist(portfolios_hist)
 
-    evaluations = []
-    for portfolio_to_evaluate in ['rp_ml', 'rp_ewma', 'rp_ldw_', 'hrp_ml', 'hrp_ewma', 'hrp_ldw_', 'equal_weight',]:
-        df_hist_returns = pd.concat([pd.DataFrame(week[f'{portfolio_to_evaluate}_weights'], index=week['date_index'])
+    asset_returns = pd.concat([pd.DataFrame(week['forward_log_returns']) for week in portfolios_hist])
+    asset_returns.index = pd.to_datetime(list(hist_covar_matrices.keys()))
+
+    evaluations = {}
+    for portfolio_to_evaluate in ['rp_ml', 'rp_ewma', 'rp_ldw', 'hrp_ml', 'hrp_ewma', 'hrp_ldw', 'equal_weight',]:
+        df_hist_allocations = pd.concat([pd.DataFrame(adjust_weights(week[f'{portfolio_to_evaluate}_weights'],
+                                                                     pd.DataFrame(week['forward_log_returns'])),
+                                                      index=week['date_index'])
                                      for week in portfolios_hist])
-        df_hist_allocations = pd.concat([pd.DataFrame(week[f'{portfolio_to_evaluate}_results'], index=week['date_index'])
+        df_hist_returns = pd.concat([pd.DataFrame(week[f'{portfolio_to_evaluate}_results'], index=week['date_index'])
                                          for week in portfolios_hist])
 
-        concentration_metrics = get_concentration_metrics(hist_covar_matrices, df_hist_allocations)
-        weekly_risk_return_metrics = get_risk_return_metrics(hist_covar_matrices, df_hist_returns, 'W')
-        monthly_risk_return_metrics = get_risk_return_metrics(hist_covar_matrices, df_hist_returns, 'M')
-        year_risk_return_metrics = get_risk_return_metrics(hist_covar_matrices, df_hist_returns, 'Y')
+        metrics = get_metrics(hist_covar_matrices, df_hist_returns, df_hist_allocations, asset_returns)
+
+        evaluations[portfolio_to_evaluate] = metrics
 
     json_file_path = f'py_lib/data/Evaluation_{start_year}_{end_year}.json'
     with open(json_file_path, 'w') as f_handle:
@@ -368,5 +521,13 @@ def evaluate_portfolios(start_year, end_year):
 
     return evaluations, portfolios_hist
 
+
 if __name__ == '__main__':
-    evaluation_metrics, hist_data = evaluate_portfolios(2003, 2005)
+    start_time = dt.now()
+    for y_e in range(2004, 2005):
+        print(f'-' * 50)
+        print(f'Starting process from {y_e} to {y_e}')
+        year_start = dt.now()
+        evaluation = evaluate_portfolios(y_e, y_e)
+        print(f'Running for {dt.now() - start_time}, last cycle took {dt.now() - year_start}')
+
