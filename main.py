@@ -138,7 +138,7 @@ def load_price_data(data_start_date, data_end_date, analysis_start_date, force_u
 
 
 def get_max_likelihood_cov_matrix(log_returns):
-    from sklearn.covariance import empirical_covariance
+    from sklearn.coscivariance import empirical_covariance
     return pd.DataFrame(empirical_covariance(log_returns), index=log_returns.columns, columns=log_returns.columns)
 
 

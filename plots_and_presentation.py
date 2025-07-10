@@ -56,6 +56,16 @@ ldw_lo_portfolios = [
     'lo_hrp_ldw',
 ]
 
+rp_lo_portfolios = [
+    'lo_rp_ml', 'lo_rp_ewma', 'lo_rp_ldw',
+]
+ivp_lo_portfolios = [
+    'lo_ivp_ml', 'lo_ivp_ewma', 'lo_ivp_ldw',
+]
+hrp_lo_portfolios = [
+    'lo_hrp_ml', 'lo_hrp_ewma', 'lo_hrp_ldw',
+]
+
 return_metrics = [
     'sharpe', 'adj_sharpe', 'total_return', 'total_long_return',
     'total_short_return', 'beta', 'sortino'
@@ -193,71 +203,71 @@ def grouped_latex_table(
     export_path=None,
     landscape=True,
 ):
-
-    # Ensure benchmark is at the end
-    cols = list(summary_df.columns)
-    if benchmark_col in cols:
-        cols.remove(benchmark_col)
-        cols.append(benchmark_col)
-    summary_df = summary_df[cols]
-
-    # Prepare column headers
-    header_groups = [col[0] if isinstance(col, tuple) else col for col in summary_df.columns]
-    header_methods = [col[1] if isinstance(col, tuple) else "" for col in summary_df.columns]
-
-    # Build LaTeX lines
-    lines = []
-    # if title:
-    #     lines.append(r"\vspace{1em}")
-    #     lines.append(r"\noindent\textbf{" + title + r"}")
+    pass
+    # # Ensure benchmark is at the end
+    # cols = list(summary_df.columns)
+    # if benchmark_col in cols:
+    #     cols.remove(benchmark_col)
+    #     cols.append(benchmark_col)
+    # summary_df = summary_df[cols]
+    #
+    # # Prepare column headers
+    # header_groups = [col[0] if isinstance(col, tuple) else col for col in summary_df.columns]
+    # header_methods = [col[1] if isinstance(col, tuple) else "" for col in summary_df.columns]
+    #
+    # # Build LaTeX lines
+    # lines = []
+    # # if title:
+    # #     lines.append(r"\vspace{1em}")
+    # #     lines.append(r"\noindent\textbf{" + title + r"}")
+    # #     lines.append("")
+    #
+    # if landscape:
+    #     lines.append(r"\begin{landscape}")
+    #     lines.append(r"\begin{table}[" + placement + "]")
+    # else:
+    #     lines.append(r"\begin{table}[" + placement + "]")
+    # lines.append(r"\centering")
+    # lines.append(r"\renewcommand{\arraystretch}{1.2}")
+    # lines.append(r"\begin{tabular}{|l|" + "ccc|" * 3 + "c|}")
+    # lines.append(r"\toprule")
+    #
+    # # Top header (group names)
+    # group_header = ["\\textbf{" + str(g).upper() + "}" for g in header_groups[:-1]]
+    # grouped = [group_header[i] if i % 3 == 0 else "" for i in range(len(group_header))]
+    # grouped.append(f"\\textbf{benchmark_name}")
+    # lines.append(" & " + " & ".join(grouped) + r" \\")
+    #
+    # # Second header (methods)
+    # lines.append(r"\textbf{Stat} & " + " & ".join(header_methods) + r" \\")
+    # lines.append(r"\midrule")
+    #
+    # # Table body
+    # for idx, row in summary_df.iterrows():
+    #     row_label = str(idx).capitalize()
+    #     row_data = [float_fmt.format(row[col]) for col in summary_df.columns]
+    #     lines.append(f"{row_label} & " + " & ".join(row_data) + r" \\")
+    #
+    # lines.append(r"\bottomrule")
+    # lines.append(r"\end{tabular}")
+    # lines.append(rf"\caption{{{caption}}}")
+    # lines.append(rf"\label{{{label}}}")
+    # if landscape:
+    #     lines.append(r"\end{table}")
+    #     lines.append(r"\end{landscape}")
+    # else:
+    #     lines.append(r"\end{table}")
+    #
+    # if legend:
     #     lines.append("")
-
-    if landscape:
-        lines.append(r"\begin{landscape}")
-        lines.append(r"\begin{table}[" + placement + "]")
-    else:
-        lines.append(r"\begin{table}[" + placement + "]")
-    lines.append(r"\centering")
-    lines.append(r"\renewcommand{\arraystretch}{1.2}")
-    lines.append(r"\begin{tabular}{|l|" + "ccc|" * 3 + "c|}")
-    lines.append(r"\toprule")
-
-    # Top header (group names)
-    group_header = ["\\textbf{" + str(g).upper() + "}" for g in header_groups[:-1]]
-    grouped = [group_header[i] if i % 3 == 0 else "" for i in range(len(group_header))]
-    grouped.append(f"\\textbf{benchmark_name}")
-    lines.append(" & " + " & ".join(grouped) + r" \\")
-
-    # Second header (methods)
-    lines.append(r"\textbf{Stat} & " + " & ".join(header_methods) + r" \\")
-    lines.append(r"\midrule")
-
-    # Table body
-    for idx, row in summary_df.iterrows():
-        row_label = str(idx).capitalize()
-        row_data = [float_fmt.format(row[col]) for col in summary_df.columns]
-        lines.append(f"{row_label} & " + " & ".join(row_data) + r" \\")
-
-    lines.append(r"\bottomrule")
-    lines.append(r"\end{tabular}")
-    lines.append(rf"\caption{{{caption}}}")
-    lines.append(rf"\label{{{label}}}")
-    if landscape:
-        lines.append(r"\end{table}")
-        lines.append(r"\end{landscape}")
-    else:
-        lines.append(r"\end{table}")
-
-    if legend:
-        lines.append("")
-        lines.append(r"\vspace{0.5em}")
-        lines.append(r"\noindent\small{" + legend + r"}")
-
-    if export_path is not None:
-        with open(export_path, "w") as f:
-            f.write("\n".join(lines))
-
-    return "\n".join(lines)
+    #     lines.append(r"\vspace{0.5em}")
+    #     lines.append(r"\noindent\small{" + legend + r"}")
+    #
+    # if export_path is not None:
+    #     with open(export_path, "w") as f:
+    #         f.write("\n".join(lines))
+    #
+    # return "\n".join(lines)
 
 
 if __name__ == '__main__':
@@ -269,12 +279,38 @@ if __name__ == '__main__':
     cvmx_eval_path = 'py_lib/data/cvmx_eval_df.pkl'
     available_tikers_path = 'py_lib/data/available_tikers.pkl'
 
+    portfolio_renames = {
+        'equal_weight': 'Equal Weight',
+        'hrp_ewma': 'Long and Short Hierarchical RP using exponentially weighted covariance',
+        'hrp_ldw': 'Long and Short Hierarchical RP using Ledoit-Wolf shrunk covariance',
+        'hrp_ml': 'Long and Short Hierarchical RP using maximum likelihood covariance',
+        'ivp_ewma': 'Long and Short Inverse Variance using exponentially weighted covariance',
+        'ivp_ldw': 'Long and Short Inverse Variance using Ledoit-Wolf shrunk covariance',
+        'ivp_ml': 'Long and Short Inverse Variance using maximum likelihood covariance',
+        'rp_ewma': 'Long and Short Risk Parity using exponentially weighted covariance',
+        'rp_ldw': 'Long and Short Risk Parity using Ledoit-Wolf shrunk covariance',
+        'rp_ml': 'Long and Short Risk Parity using maximum likelihood covariance',
+        'lo_hrp_ewma': 'Hierarchical RP using exponentially weighted covariance',
+        'lo_hrp_ldw': 'Hierarchical RP using Ledoit-Wolf shrunk covariance',
+        'lo_hrp_ml': 'Hierarchical RP using maximum likelihood covariance',
+        'lo_ivp_ewma': 'Inverse Variance using exponentially weighted covariance',
+        'lo_ivp_ldw': 'Inverse Variance using Ledoit-Wolf shrunk covariance',
+        'lo_ivp_ml': 'Inverse Variance using maximum likelihood covariance',
+        'lo_rp_ewma': 'Risk Parity using exponentially weighted covariance',
+        'lo_rp_ldw': 'Risk Parity using Ledoit-Wolf shrunk covariance',
+        'lo_rp_ml': 'Risk Parity using maximum likelihood covariance',
+    }
+
     year_scores_df = pd.read_pickle(year_scores_path)
     month_scores_df = pd.read_pickle(month_scores_path)
     week_scores_df = pd.read_pickle(week_scores_path)
     cvmx_eval_df = pd.read_pickle(cvmx_eval_path)
     available_tikers = pd.read_pickle(available_tikers_path)
     available_tikers.index = pd.to_datetime(available_tikers.index)
+
+    week_scores_df = week_scores_df.rename(columns=portfolio_renames, level=1)
+    month_scores_df = month_scores_df.rename(columns=portfolio_renames, level=1)
+    year_scores_df = year_scores_df.rename(columns=portfolio_renames, level=1)
 
     cvmx_eval_pivot = cvmx_eval_df.reset_index()[['level_0', 'level_1', 'mse', 'medae']].pivot_table(index='level_0',
                                                                                                      columns='level_1')
@@ -298,9 +334,9 @@ if __name__ == '__main__':
         return r, np.tanh(z_lower), np.tanh(z_upper)
 
     cov_mx_groups = {
-        'ewma_cov_matrix': ewma_lo_portfolios,
-        'ledoit_wolf_cov_matrix': ldw_lo_portfolios,
-        'ml_cov_matrix': ml_lo_portfolios,
+        'ewma_cov_matrix': list(map(portfolio_renames.get, ewma_lo_portfolios)),
+        'ledoit_wolf_cov_matrix': list(map(portfolio_renames.get, ldw_lo_portfolios)),
+        'ml_cov_matrix': list(map(portfolio_renames.get, ml_lo_portfolios)),
     }
 
     correl_mses = {}
@@ -361,11 +397,11 @@ if __name__ == '__main__':
     correl_medae_df = pd.concat(correl_medaes, axis=1)
     correl_medaes_ci_df = pd.concat(correl_medaes_ci, axis=1)
 
-    ls_cum_results = (np.exp(week_scores_df['total_return'].sort_index().cumsum()) - 1)[ls_portfolios]
-    lo_cum_results = (np.exp(week_scores_df['total_return'].sort_index().cumsum()) - 1)[lo_portfolios]
+    ls_cum_results = (np.exp(week_scores_df['total_return'].sort_index().cumsum()) - 1)[list(map(portfolio_renames.get, ls_portfolios))]
+    lo_cum_results = (np.exp(week_scores_df['total_return'].sort_index().cumsum()) - 1)[list(map(portfolio_renames.get, lo_portfolios))]
 
-    lo_cum_results_month = (np.exp(month_scores_df['total_return'].sort_index().cumsum()) - 1)[lo_portfolios]
-    ls_cum_results_month = (np.exp(month_scores_df['total_return'].sort_index().cumsum()) - 1)[ls_portfolios]
+    lo_cum_results_month = (np.exp(month_scores_df['total_return'].sort_index().cumsum()) - 1)[list(map(portfolio_renames.get, lo_portfolios))]
+    ls_cum_results_month = (np.exp(month_scores_df['total_return'].sort_index().cumsum()) - 1)[list(map(portfolio_renames.get, ls_portfolios))]
 
     tables = []
 
@@ -373,7 +409,7 @@ if __name__ == '__main__':
     #### Returns
     ####################################################################################################################
 
-    lo_monthly_return_distribution = month_scores_df['total_return'][lo_portfolios].agg([
+    lo_monthly_return_distribution = month_scores_df['total_return'][list(map(portfolio_renames.get, lo_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -383,7 +419,7 @@ if __name__ == '__main__':
         lambda x: x.quantile(0.90),
         'max',
     ])
-    ls_monthly_return_distribution = month_scores_df['total_return'][ls_portfolios].agg([
+    ls_monthly_return_distribution = month_scores_df['total_return'][list(map(portfolio_renames.get, ls_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -416,29 +452,28 @@ if __name__ == '__main__':
         )
     )
 
-    boxplot_df = month_scores_df['total_return'][lo_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns.str.removeprefix('lo_')])
+    boxplot_df = month_scores_df['total_return'][list(map(portfolio_renames.get, lo_portfolios))].copy()
+    boxplot_df.columns = pd.MultiIndex.from_tuples([(' '.join(col.split(' ')[:2]), ' '.join(col.split(' ')[3:-1])) for col in boxplot_df.columns])
     grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
+                     groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+                     levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
                      show=False,
                      export_path=fr'out/images/lo_total_return_boxplots.png',
                      title="Monthly Returns Distribution - Long Only Portfolios - Grouped by covariance matrix estimation method")
-    boxplot_df = month_scores_df['total_return'][ls_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples([col.split('_', 1) for col in boxplot_df.columns])
-    grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
-                     show=False,
-                     export_path=fr'out/images/ls_total_return_boxplots.png',
-                     title="Monthly Returns Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
+    # boxplot_df = month_scores_df['total_return'][list(map(portfolio_renames.get, ls_portfolios))].copy()
+    # boxplot_df.columns = pd.MultiIndex.from_tuples([(' '.join(col.split(' ')[:2]), ' '.join(col.split(' ')[3:-1])) for col in boxplot_df.columns])
+    # grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
+    #                  groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+    #                  levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
+    #                  show=False,
+    #                  export_path=fr'out/images/ls_total_return_boxplots.png',
+    #                  title="Monthly Returns Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
 
     ####################################################################################################################
     #### Vol
     ####################################################################################################################
 
-    lo_monthly_vol_distribution = month_scores_df['vol'][lo_portfolios].agg([
+    lo_monthly_vol_distribution = month_scores_df['vol'][list(map(portfolio_renames.get, lo_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -448,7 +483,7 @@ if __name__ == '__main__':
         lambda x: x.quantile(0.90),
         'max',
     ])
-    ls_monthly_vol_distribution = month_scores_df['vol'][ls_portfolios].agg([
+    ls_monthly_vol_distribution = month_scores_df['vol'][list(map(portfolio_renames.get, ls_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -482,30 +517,29 @@ if __name__ == '__main__':
         )
     )
 
-    boxplot_df = month_scores_df['vol'][lo_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns.str.removeprefix('lo_')])
+    boxplot_df = month_scores_df['vol'][list(map(portfolio_renames.get, lo_portfolios))].copy()
+    boxplot_df.columns = pd.MultiIndex.from_tuples([(' '.join(col.split(' ')[:2]), ' '.join(col.split(' ')[3:-1])) for col in boxplot_df.columns])
     grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
+                     groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+                     levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
                      show=False,
                      export_path=fr'out/images/lo_vol_boxplots.png',
                      title="Monthly Return Volatility Distribution - Long Only Portfolios - Grouped by covariance matrix estimation method")
-    boxplot_df = month_scores_df['vol'][ls_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns])
-    grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
-                     show=False,
-                     export_path=fr'out/images/ls_vol_boxplots.png',
-                     title="Monthly Return Volatility Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
+    # boxplot_df = month_scores_df['vol'][list(map(portfolio_renames.get, ls_portfolios))].copy()
+    # boxplot_df.columns = pd.MultiIndex.from_tuples(
+    #     [col.split('_', 1) for col in boxplot_df.columns])
+    # grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
+    #                  groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+    #                  levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
+    #                  show=False,
+    #                  export_path=fr'out/images/ls_vol_boxplots.png',
+    #                  title="Monthly Return Volatility Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
 
     ####################################################################################################################
     #### Adjusted Sharpe
     ####################################################################################################################
 
-    lo_monthly_adj_sharpe_distribution = month_scores_df['adj_sharpe'][lo_portfolios].agg([
+    lo_monthly_adj_sharpe_distribution = month_scores_df['adj_sharpe'][list(map(portfolio_renames.get, lo_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -515,7 +549,7 @@ if __name__ == '__main__':
         lambda x: x.quantile(0.90),
         'max',
     ])
-    ls_monthly_adj_sharpe_distribution = month_scores_df['adj_sharpe'][ls_portfolios].agg([
+    ls_monthly_adj_sharpe_distribution = month_scores_df['adj_sharpe'][list(map(portfolio_renames.get, ls_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -549,30 +583,29 @@ if __name__ == '__main__':
         )
     )
 
-    boxplot_df = month_scores_df['adj_sharpe'][lo_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns.str.removeprefix('lo_')])
+    boxplot_df = month_scores_df['adj_sharpe'][list(map(portfolio_renames.get, lo_portfolios))].copy()
+    boxplot_df.columns = pd.MultiIndex.from_tuples([(' '.join(col.split(' ')[:2]), ' '.join(col.split(' ')[3:-1])) for col in boxplot_df.columns])
     grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
+                     groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+                     levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
                      show=False,
                      export_path=fr'out/images/lo_adjusted_sharpe_boxplots.png',
                      title="Monthly Adjusted Sharpe Distribution - Long Only Portfolios - Grouped by covariance matrix estimation method")
-    boxplot_df = month_scores_df['adj_sharpe'][ls_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns])
-    grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
-                     show=False,
-                     export_path=fr'out/images/ls_adjusted_sharpe_boxplots.png',
-                     title="Monthly Adjusted Sharpe Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
+    boxplot_df = month_scores_df['adj_sharpe'][list(map(portfolio_renames.get, ls_portfolios))].copy()
+    # boxplot_df.columns = pd.MultiIndex.from_tuples(
+    #     [col.split('_', 1) for col in boxplot_df.columns])
+    # grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
+    #                  groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+    #                  levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
+    #                  show=False,
+    #                  export_path=fr'out/images/ls_adjusted_sharpe_boxplots.png',
+    #                  title="Monthly Adjusted Sharpe Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
 
     ####################################################################################################################
     #### Long / Short returns
     ####################################################################################################################
 
-    ls_monthly_long_return_distribution = month_scores_df['total_long_return'][ls_portfolios].agg([
+    ls_monthly_long_return_distribution = month_scores_df['total_long_return'][list(map(portfolio_renames.get, ls_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -582,7 +615,7 @@ if __name__ == '__main__':
         lambda x: x.quantile(0.90),
         'max',
     ])
-    ls_monthly_short_return_distribution = month_scores_df['total_short_return'][ls_portfolios].agg([
+    ls_monthly_short_return_distribution = month_scores_df['total_short_return'][list(map(portfolio_renames.get, ls_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -616,30 +649,30 @@ if __name__ == '__main__':
         )
     )
 
-    boxplot_df = month_scores_df['total_long_return'][ls_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns])
-    grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
-                     show=False,
-                     export_path=fr'out/images/ls_long_return_boxplots.png',
-                     title="Monthly Long Return Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
-    boxplot_df = month_scores_df['total_short_return'][ls_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns])
-    grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
-                     show=False,
-                     export_path=fr'out/images/ls_short_return_boxplots.png',
-                     title="Monthly Short Return Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
+    # boxplot_df = month_scores_df['total_long_return'][list(map(portfolio_renames.get, ls_portfolios))].copy()
+    # boxplot_df.columns = pd.MultiIndex.from_tuples(
+    #     [col.split('_', 1) for col in boxplot_df.columns])
+    # grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
+    #                  groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+    #                  levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
+    #                  show=False,
+    #                  export_path=fr'out/images/ls_long_return_boxplots.png',
+    #                  title="Monthly Long Return Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
+    # boxplot_df = month_scores_df['total_short_return'][list(map(portfolio_renames.get, ls_portfolios))].copy()
+    # boxplot_df.columns = pd.MultiIndex.from_tuples(
+    #     [col.split('_', 1) for col in boxplot_df.columns])
+    # grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
+    #                  groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+    #                  levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
+    #                  show=False,
+    #                  export_path=fr'out/images/ls_short_return_boxplots.png',
+    #                  title="Monthly Short Return Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
 
     ####################################################################################################################
     #### Sharpe
     ####################################################################################################################
 
-    lo_monthly_sharpe_distribution = month_scores_df['sharpe'][lo_portfolios].agg([
+    lo_monthly_sharpe_distribution = month_scores_df['sharpe'][list(map(portfolio_renames.get, lo_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -649,7 +682,7 @@ if __name__ == '__main__':
         lambda x: x.quantile(0.90),
         'max',
     ])
-    ls_monthly_sharpe_distribution = month_scores_df['sharpe'][ls_portfolios].agg([
+    ls_monthly_sharpe_distribution = month_scores_df['sharpe'][list(map(portfolio_renames.get, ls_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -683,30 +716,29 @@ if __name__ == '__main__':
         )
     )
 
-    boxplot_df = month_scores_df['sharpe'][lo_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns.str.removeprefix('lo_')])
+    boxplot_df = month_scores_df['sharpe'][list(map(portfolio_renames.get, lo_portfolios))].copy()
+    boxplot_df.columns = pd.MultiIndex.from_tuples([(' '.join(col.split(' ')[:2]), ' '.join(col.split(' ')[3:-1])) for col in boxplot_df.columns])
     grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
+                     groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+                     levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
                      show=False,
                      export_path=fr'out/images/lo_sharpe_boxplots.png',
                      title="Monthly Sharpe Distribution - Long Only Portfolios - Grouped by covariance matrix estimation method")
-    boxplot_df = month_scores_df['sharpe'][ls_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns])
-    grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
-                     show=False,
-                     export_path=fr'out/images/ls_sharpe_boxplots.png',
-                     title="Monthly Sharpe Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
+    # boxplot_df = month_scores_df['sharpe'][list(map(portfolio_renames.get, ls_portfolios))].copy()
+    # boxplot_df.columns = pd.MultiIndex.from_tuples(
+    #     [col.split('_', 1) for col in boxplot_df.columns])
+    # grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
+    #                  groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+    #                  levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
+    #                  show=False,
+    #                  export_path=fr'out/images/ls_sharpe_boxplots.png',
+    #                  title="Monthly Sharpe Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
 
     ####################################################################################################################
     #### Beta
     ####################################################################################################################
 
-    lo_monthly_beta_distribution = month_scores_df['beta'][lo_portfolios].agg([
+    lo_monthly_beta_distribution = month_scores_df['beta'][list(map(portfolio_renames.get, lo_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -716,7 +748,7 @@ if __name__ == '__main__':
         lambda x: x.quantile(0.90),
         'max',
     ])
-    ls_monthly_beta_distribution = month_scores_df['beta'][ls_portfolios].agg([
+    ls_monthly_beta_distribution = month_scores_df['beta'][list(map(portfolio_renames.get, ls_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -750,30 +782,31 @@ if __name__ == '__main__':
         )
     )
 
-    boxplot_df = month_scores_df['beta'][lo_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns.str.removeprefix('lo_')])
+    boxplot_df = month_scores_df['beta'][list(map(portfolio_renames.get, lo_portfolios))].copy()
+    boxplot_df.columns = pd.MultiIndex.from_tuples([(' '.join(col.split(' ')[:2]), ' '.join(col.split(' ')[3:-1])) for col in boxplot_df.columns])
     grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
+                     groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+                     levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
                      show=False,
                      export_path=fr'out/images/lo_beta_boxplots.png',
                      title="Monthly Market Beta Distribution - Long Only Portfolios - Grouped by covariance matrix estimation method")
-    boxplot_df = month_scores_df['beta'][ls_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns])
-    grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
-                     show=False,
-                     export_path=fr'out/images/ls_beta_boxplots.png',
-                     title="Monthly Market Beta Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
+    # boxplot_df = month_scores_df['beta'][list(map(portfolio_renames.get, ls_portfolios))].copy()
+    # boxplot_df.columns = pd.MultiIndex.from_tuples(
+    #     [col.split('_', 1) for col in boxplot_df.columns])
+    # grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
+    #                  groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+    #                  levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
+    #                  show=False,
+    #                  export_path=fr'out/images/ls_beta_boxplots.png',
+    #                  title="Monthly Market Beta Distribution - Long and Short Portfolios - Grouped by covariance matrix estimation method")
+
+    tables = []
 
     ####################################################################################################################
-    #### Money Concentration - 10%
+    #### Risk Concentration - 10%
     ####################################################################################################################
 
-    lo_monthly_money_conc_at_10pct_mean_distribution = month_scores_df['money_conc_at_10pct_mean'][lo_portfolios].agg([
+    lo_monthly_money_conc_at_10pct_mean_distribution = month_scores_df['risk_conc_at_10pct_mean'][list(map(portfolio_renames.get, lo_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -783,7 +816,85 @@ if __name__ == '__main__':
         lambda x: x.quantile(0.90),
         'max',
     ])
-    ls_monthly_money_conc_at_10pct_mean_distribution = month_scores_df['money_conc_at_10pct_mean'][ls_portfolios].agg([
+
+    lo_monthly_money_conc_at_10pct_mean_distribution.index = ['mean', 'min', 'q10', 'q25', 'q50', 'q75', 'q90', 'max']
+    lo_monthly_money_conc_at_10pct_mean_distribution.columns = pd.MultiIndex.from_tuples(
+        [col.split('_', 1) for col in lo_monthly_money_conc_at_10pct_mean_distribution.columns.str.removeprefix('lo_')])
+
+
+    tables.append(
+        grouped_latex_table(
+            lo_monthly_money_conc_at_10pct_mean_distribution,
+            caption='Long-Only portfolios top 10% assets risk distribution',
+            label='lo_risk_conc_at_10pct_mean_summary',
+            # title='Long-Only Monthly Beta',
+        )
+    )
+
+    boxplot_df = month_scores_df['risk_conc_at_10pct_mean'][list(map(portfolio_renames.get, lo_portfolios))].copy()
+    boxplot_df.columns = pd.MultiIndex.from_tuples([(' '.join(col.split(' ')[:2]), ' '.join(col.split(' ')[3:-1])) for col in boxplot_df.columns])
+    grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
+                     groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+                     levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
+                     show=False,
+                     export_path=fr'out/images/lo_risk_conc_at_10pct_mean_boxplots.png',
+                     title="Top 10% Assets Risk - Long Only Portfolios - Grouped by covariance matrix estimation method")
+
+
+    ####################################################################################################################
+    #### Risk Concentration - 25%
+    ####################################################################################################################
+
+    lo_monthly_money_conc_at_25pct_mean_distribution = month_scores_df['risk_conc_at_25pct_mean'][list(map(portfolio_renames.get, lo_portfolios))].agg([
+        'mean',
+        'min',
+        lambda x: x.quantile(0.10),
+        lambda x: x.quantile(0.25),
+        'median',
+        lambda x: x.quantile(0.75),
+        lambda x: x.quantile(0.90),
+        'max',
+    ])
+    lo_monthly_money_conc_at_25pct_mean_distribution.index = ['mean', 'min', 'q10', 'q25', 'q50', 'q75', 'q90', 'max']
+    lo_monthly_money_conc_at_25pct_mean_distribution.columns = pd.MultiIndex.from_tuples(
+        [col.split('_', 1) for col in lo_monthly_money_conc_at_25pct_mean_distribution.columns.str.removeprefix('lo_')])
+
+
+    tables.append(
+        grouped_latex_table(
+            lo_monthly_money_conc_at_25pct_mean_distribution,
+            caption='Long-Only portfolios top 25% assets risk distribution',
+            label='lo_risk_conc_at_25pct_mean_summary',
+            # title='Long-Only Monthly Beta',
+        )
+    )
+
+    boxplot_df = month_scores_df['risk_conc_at_25pct_mean'][list(map(portfolio_renames.get, lo_portfolios))].copy()
+    boxplot_df.columns = pd.MultiIndex.from_tuples([(' '.join(col.split(' ')[:2]), ' '.join(col.split(' ')[3:-1])) for col in boxplot_df.columns])
+    grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
+                     groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+                     levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
+                     show=False,
+                     export_path=fr'out/images/lo_risk_conc_at_25pct_mean_boxplots.png',
+                     title="Top 25% Assets Risk - Long Only Portfolios - Grouped by covariance matrix estimation method")
+
+
+
+    ####################################################################################################################
+    #### Money Concentration - 10%
+    ####################################################################################################################
+
+    lo_monthly_money_conc_at_10pct_mean_distribution = month_scores_df['money_conc_at_10pct_mean'][list(map(portfolio_renames.get, lo_portfolios))].agg([
+        'mean',
+        'min',
+        lambda x: x.quantile(0.10),
+        lambda x: x.quantile(0.25),
+        'median',
+        lambda x: x.quantile(0.75),
+        lambda x: x.quantile(0.90),
+        'max',
+    ])
+    ls_monthly_money_conc_at_10pct_mean_distribution = month_scores_df['money_conc_at_10pct_mean'][list(map(portfolio_renames.get, ls_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -817,30 +928,29 @@ if __name__ == '__main__':
         )
     )
 
-    boxplot_df = month_scores_df['money_conc_at_10pct_mean'][lo_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns.str.removeprefix('lo_')])
+    boxplot_df = month_scores_df['money_conc_at_10pct_mean'][list(map(portfolio_renames.get, lo_portfolios))].copy()
+    boxplot_df.columns = pd.MultiIndex.from_tuples([(' '.join(col.split(' ')[:2]), ' '.join(col.split(' ')[3:-1])) for col in boxplot_df.columns])
     grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
+                     groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+                     levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
                      show=False,
                      export_path=fr'out/images/lo_money_conc_at_10pct_mean_boxplots.png',
                      title="Top 10% Assets Weight - Long Only Portfolios - Grouped by covariance matrix estimation method")
-    boxplot_df = month_scores_df['money_conc_at_10pct_mean'][ls_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns])
-    grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
-                     show=False,
-                     export_path=fr'out/images/ls_money_conc_at_10pct_mean_boxplots.png',
-                     title="Top 10% Assets Weight - Long and Short Portfolios - Grouped by covariance matrix estimation method")
+    # boxplot_df = month_scores_df['money_conc_at_10pct_mean'][list(map(portfolio_renames.get, ls_portfolios))].copy()
+    # boxplot_df.columns = pd.MultiIndex.from_tuples(
+    #     [col.split('_', 1) for col in boxplot_df.columns])
+    # grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
+    #                  groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+    #                  levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
+    #                  show=False,
+    #                  export_path=fr'out/images/ls_money_conc_at_10pct_mean_boxplots.png',
+    #                  title="Top 10% Assets Weight - Long and Short Portfolios - Grouped by covariance matrix estimation method")
 
     ####################################################################################################################
     #### Money Concentration - 25%
     ####################################################################################################################
 
-    lo_monthly_money_conc_at_25pct_mean_distribution = month_scores_df['money_conc_at_25pct_mean'][lo_portfolios].agg([
+    lo_monthly_money_conc_at_25pct_mean_distribution = month_scores_df['money_conc_at_25pct_mean'][list(map(portfolio_renames.get, lo_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -850,7 +960,7 @@ if __name__ == '__main__':
         lambda x: x.quantile(0.90),
         'max',
     ])
-    ls_monthly_money_conc_at_25pct_mean_distribution = month_scores_df['money_conc_at_25pct_mean'][ls_portfolios].agg([
+    ls_monthly_money_conc_at_25pct_mean_distribution = month_scores_df['money_conc_at_25pct_mean'][list(map(portfolio_renames.get, ls_portfolios))].agg([
         'mean',
         'min',
         lambda x: x.quantile(0.10),
@@ -884,24 +994,23 @@ if __name__ == '__main__':
         )
     )
 
-    boxplot_df = month_scores_df['money_conc_at_25pct_mean'][lo_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns.str.removeprefix('lo_')])
+    boxplot_df = month_scores_df['money_conc_at_25pct_mean'][list(map(portfolio_renames.get, lo_portfolios))].copy()
+    boxplot_df.columns = pd.MultiIndex.from_tuples([(' '.join(col.split(' ')[:2]), ' '.join(col.split(' ')[3:-1])) for col in boxplot_df.columns])
     grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
+                     groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+                     levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
                      show=False,
                      export_path=fr'out/images/lo_money_conc_at_25pct_mean_boxplots.png',
                      title="Top 25% Assets Weight - Long Only Portfolios - Grouped by covariance matrix estimation method")
-    boxplot_df = month_scores_df['money_conc_at_25pct_mean'][ls_portfolios].copy()
-    boxplot_df.columns = pd.MultiIndex.from_tuples(
-        [col.split('_', 1) for col in boxplot_df.columns])
-    grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
-                     groups=['ml', 'ewma', 'ldw'],
-                     levels=['rp', 'ivp', 'hrp'],
-                     show=False,
-                     export_path=fr'out/images/ls_money_conc_at_25pct_mean_boxplots.png',
-                     title="Top 25% Assets Weight - Long and Short Portfolios - Grouped by covariance matrix estimation method")
+    # boxplot_df = month_scores_df['money_conc_at_25pct_mean'][list(map(portfolio_renames.get, ls_portfolios))].copy()
+    # boxplot_df.columns = pd.MultiIndex.from_tuples(
+    #     [col.split('_', 1) for col in boxplot_df.columns])
+    # grouped_boxplots(boxplot_df.reorder_levels([1, 0], axis=1),
+    #                  groups=['maximum likelihood', 'exponentially weighted', 'Ledoit-Wolf shrunk'],
+    #                  levels=['Risk Parity', 'Inverse Variance', 'Hierarchical RP'],
+    #                  show=False,
+    #                  export_path=fr'out/images/ls_money_conc_at_25pct_mean_boxplots.png',
+    #                  title="Top 25% Assets Weight - Long and Short Portfolios - Grouped by covariance matrix estimation method")
 
     ####################################################################################################################
     #### Available assets per period
@@ -923,8 +1032,8 @@ if __name__ == '__main__':
     ####################################################################################################################
     #### Cumulative Returns
     ####################################################################################################################
-    weekly_returns = pd.concat([np.exp(week_scores_df['total_return'][lo_portfolios]),
-                                week_scores_df.reorder_levels([1, 0], axis=1)['equal_weight']['risk_free']], axis=1)
+    weekly_returns = pd.concat([np.exp(week_scores_df['total_return'][list(map(portfolio_renames.get, lo_portfolios))]),
+                                week_scores_df.reorder_levels([1, 0], axis=1)['Equal Weight']['risk_free']], axis=1)
 
     name_map = {
         'lo_rp_ml': 'True Risk-Parity using makimum-likelihood estimated matrix',
@@ -999,11 +1108,17 @@ if __name__ == '__main__':
     plt.close()
 
     g_names = {
-        0: 'Maximum Likelihood',
-        1: 'EWMA',
-        2: 'Ledoit-Wolf',
+        0: 'Risk Parity',
+        1: 'Inverse Variance',
+        2: 'Hierarchical Risk Parity',
     }
-    for i, group in enumerate([ml_lo_portfolios, ewma_lo_portfolios, ldw_lo_portfolios]):
+
+
+    for i, group in enumerate([
+        list(map(portfolio_renames.get, rp_lo_portfolios)),
+        list(map(portfolio_renames.get, ivp_lo_portfolios)),
+        list(map(portfolio_renames.get, hrp_lo_portfolios)),
+        ]):
         # Plot
         fig, ax = plt.subplots(figsize=(10, 5))
         cumulative[group].plot(ax=ax)
@@ -1017,7 +1132,9 @@ if __name__ == '__main__':
         plt.savefig(fr'out/images/{g_names[i]}_cumulative_returns.png', format='png')
         plt.close()
 
-    corr = (weekly_returns.drop('risk_free', axis=1) - 1).corr()
+    weekly_returns_corr = weekly_returns.copy()
+    weekly_returns_corr.columns = weekly_returns_corr.columns.str.removesuffix(' covariance').str.replace('using', '|')
+    corr = (weekly_returns_corr.drop('risk_free', axis=1) - 1).corr()
 
     plt.figure(figsize=(10, 8))
     sns.set(font_scale=0.9)
@@ -1025,7 +1142,7 @@ if __name__ == '__main__':
     ax = sns.heatmap(
         corr,
         annot=True,
-        fmt=".4f",
+        fmt=".3f",
         cmap="coolwarm",
         vmin=0.95, vmax=1.0,
         linewidths=0.5,
@@ -1073,14 +1190,17 @@ if __name__ == '__main__':
     fig, ax1 = plt.subplots(figsize=(10, 5))
 
     # Primary axis for main_cols
-    cvmx_eval_rmse.drop('ewma_cov_matrix', axis=1).plot(ax=ax1)
+    cvmx_eval_rmse.drop('ewma_cov_matrix', axis=1).rename(columns={
+        'ledoit_wolf_cov_matrix': 'Ledoit-Wolf shrunk',
+        'ml_cov_matrix': 'Maximum likelihood',
+    }).plot(ax=ax1)
     ax1.set_ylabel("RMSE")
     ax1.set_title("Covariance Matrix Root Mean Squared Error")
 
     # Secondary axis for standout variable
     ax2 = ax1.twinx()
-    cvmx_eval_rmse['ewma_cov_matrix'].plot(ax=ax2, color='green', label='ewma_cov_matrix [rhs]')
-    ax2.set_ylabel(f"ewma_cov_matrix (Secondary Axis)")
+    cvmx_eval_rmse['ewma_cov_matrix'].plot(ax=ax2, color='green', label='Exponentially weighted [rhs]')
+    ax2.set_ylabel(f"Exponentially weighted (Secondary Axis)")
 
     # Combine legends
     lines_1, labels_1 = ax1.get_legend_handles_labels()
